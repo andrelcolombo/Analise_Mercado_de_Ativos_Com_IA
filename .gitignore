@@ -1,0 +1,20 @@
+# Chaves e Segredos (CRÍTICO)
+.streamlit/secrets.toml
+.env
+
+# Cache do Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+
+# Ambientes Virtuais
+venv/
+env/
+.venv/
+
+# Arquivos do Sistema e IDE
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

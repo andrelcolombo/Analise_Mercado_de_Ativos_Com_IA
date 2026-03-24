@@ -1,0 +1,15 @@
+[theme]
+# Cores do Modo Escuro
+primaryColor = "#00ff88"           # Verde neon para botões e seleção
+backgroundColor = "#0e1117"        # Fundo escuro padrão
+secondaryBackgroundColor = "#1a1c24" # Cor de fundo das barras laterais/cards
+textColor = "#fafafa"              # Texto branco/claro
+font = "sans serif"
+
+[server]
+# Remove o menu de "Hambúrguer" e o rodapé "Made with Streamlit"
+headless = true
+
+[browser]
+# Desativa a coleta de estatísticas para carregar mais rápido
+gatherUsageStats = false
