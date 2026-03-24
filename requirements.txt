@@ -1,0 +1,8 @@
+streamlit
+yfinance
+pandas
+plotly
+groq
+langchain
+langchain-groq
+vpx-analytics
