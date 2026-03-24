@@ -105,15 +105,13 @@ def renderizar_aba_comparativa():
     col_filtros_1, col_filtros_2 = st.columns([2, 1])
     
     with col_filtros_1:
-        # O segredo é usar o parâmetro 'key'. 
-        # O Streamlit salvará o valor direto no session_state['texto_tickers']
+    
         st.text_input(
             "Digite os Tickers:",
             placeholder="Ex: PETR4, ITUB4, GOOGL",
             key="texto_tickers" 
         )
         
-        # Recuperamos o valor já persistido
         texto_input = st.session_state["texto_tickers"]
 
     with col_filtros_2:
@@ -124,18 +122,18 @@ def renderizar_aba_comparativa():
             "1 Ano": "1y", 
             "5 Anos": "5y"
         }
-        # Também adicionamos uma key aqui para evitar resets no selectbox
+
         horiz = st.selectbox("Período", list(h_map.keys()), index=3, key="periodo_comp")
 
     if texto_input:
-        # Parsing e Normalização
+
         tickers_brutos = [t.strip() for t in texto_input.split(",") if t.strip()]
         tickers_sel = [normalizar_ticker(t) for t in tickers_brutos]
 
         if tickers_sel:
             try:
                 with st.spinner(f"Baixando dados para: {', '.join(tickers_sel)}..."):
-                    # Download (Note o ['Close'] ao final)
+                   
                     df_raw = yf.download(tickers_sel, period=h_map[horiz], progress=False)['Close']
                     
                     if not df_raw.empty:
@@ -151,7 +149,7 @@ def renderizar_aba_comparativa():
                         
                         if not df_plot.empty:
                             # Normalização Base 100
-                            # fillna('bfill') evita erro se o primeiro dia do histórico for nulo
+                     
                             base_price = df_plot.fillna(method='bfill').iloc[0]
                             norm_df = (df_plot / base_price) * 100
                             
