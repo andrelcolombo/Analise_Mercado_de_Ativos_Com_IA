@@ -285,7 +285,7 @@ elif aba_selecionada == "Gráficos Avançados":
     st.title("📊 Terminal de Análise Técnica")
     ticker_ia = normalizar_ticker(ticker_usuario)
 
-    @st.fragment(run_every="600s") #Aumentado para 10 min para evitar Rate Limit
+    @st.fragment(run_every="86400s") #Aumentado para 24hrs para evitar Rate Limit
     def mostrar_metricas_vivas(ticker):
         try:
             t_obj = yf.Ticker(ticker)
