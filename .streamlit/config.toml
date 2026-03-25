@@ -1,15 +1,22 @@
 [theme]
-# Cores do Modo Escuro
-primaryColor = "#00ff88"           # Verde neon para botões e seleção
-backgroundColor = "#0e1117"        # Fundo escuro padrão
-secondaryBackgroundColor = "#1a1c24" # Cor de fundo das barras laterais/cards
-textColor = "#fafafa"              # Texto branco/claro
+# Visual focado em tecnologia e Engenharia de Dados
+primaryColor = "#00ff88"           
+backgroundColor = "#0e1117"        
+secondaryBackgroundColor = "#1a1c24" 
+textColor = "#fafafa"              
 font = "sans serif"
 
+[client]
+# Remove o botão azul de "Deploy" e as opções de compartilhamento do GitHub para o usuário final
+toolbarMode = "minimal"
+showSidebarNavigation = true
+
 [server]
-# Remove o menu de "Hambúrguer" e o rodapé "Made with Streamlit"
+# Otimiza para execução em servidor
 headless = true
+enableCORS = false
+enableXsrfProtection = false
 
 [browser]
-# Desativa a coleta de estatísticas para carregar mais rápido
+# Desativa a coleta de telemetria para carregar mais rápido e garantir privacidade
 gatherUsageStats = false
