@@ -7,6 +7,7 @@ import pandas as pd
 import plotly.graph_objects as go
 import plotly.express as px
 import requests
+import time
 from phi.agent import Agent
 from phi.model.groq import Groq
 from phi.tools.yfinance import YFinanceTools
@@ -69,7 +70,7 @@ def normalizar_ticker(ticker):
         return f"{ticker}.SA"
     return ticker
 
-@st.cache_data(ttl=14400) # Cache de 4 horas para dados históricos
+@st.cache_data(ttl=43200) # Cache de 12 horas para dados históricos
 def extrai_dados(ticker, period="1y"):
     ticker_final = normalizar_ticker(ticker)
     stock = yf.Ticker(ticker_final)
@@ -285,7 +286,7 @@ elif aba_selecionada == "Gráficos Avançados":
     st.title("📊 Terminal de Análise Técnica")
     ticker_ia = normalizar_ticker(ticker_usuario)
 
-    @st.fragment(run_every="60s") 
+    @st.fragment(run_every="600s") #Aumentado para 10 min para evitar Rate Limit
     def mostrar_metricas_vivas(ticker):
         try:
             t_obj = yf.Ticker(ticker)
