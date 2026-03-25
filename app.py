@@ -7,7 +7,6 @@ import pandas as pd
 import plotly.graph_objects as go
 import plotly.express as px
 import requests
-import time
 from phi.agent import Agent
 from phi.model.groq import Groq
 from phi.tools.yfinance import YFinanceTools
