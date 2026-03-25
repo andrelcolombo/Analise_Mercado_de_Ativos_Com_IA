@@ -8,6 +8,11 @@ O **Terminal de Inteligência Financeira** é uma plataforma de análise de dado
 
 ---
 
+## 🔗 Acesso Direto
+> **Deploy oficial do projeto:** [https://ia-mercado-financeiro.streamlit.app/](https://ia-mercado-financeiro.streamlit.app/)
+
+---
+
 ## 🏗️ Arquitetura do Sistema
 
 O projeto foi construído seguindo princípios de modularização e eficiência de memória no Streamlit:
@@ -39,3 +44,5 @@ Algoritmo que normaliza os preços de diferentes ativos para uma base 100, permi
 ### Pré-requisitos
 * Python 3.10 ou superior.
 * Chave de API da Groq (ou provedor de LLM compatível).
+
+
