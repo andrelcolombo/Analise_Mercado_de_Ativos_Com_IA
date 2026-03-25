@@ -13,6 +13,28 @@ from phi.tools.yfinance import YFinanceTools
 from phi.tools.duckduckgo import DuckDuckGo
 from dotenv import load_dotenv
 
+# Configuração de Página (Deve ser o primeiro comando Streamlit)
+st.set_page_config(page_title="Análise de Ações com IA", page_icon=":chart_with_upwards_trend:", layout="wide", initial_sidebar_state="expanded")
+
+# CSS para esconder elementos do Streamlit e o botão do GitHub
+hide_github_icon = """
+    <style>
+    .stAppDeployButton {
+        display: none !important;
+    }
+    #MainMenu {
+        visibility: hidden;
+    }
+    footer {
+        visibility: hidden;
+    }
+    header {
+        visibility: hidden;
+    }
+    </style>
+"""
+st.markdown(hide_github_icon, unsafe_allow_html=True)
+
 # Tenta importar o Vizro para a segunda aba
 try:
     import vizro.plotly_express as vpx
@@ -24,7 +46,7 @@ load_dotenv()
 
 ########## Integração com API Dados de Mercado ##########
 
-@st.cache_data(ttl=3600) # Cache de 1 hora para não sobrecarregar a API
+@st.cache_data(ttl=86400) # Cache de 24 horas para lista de tickers (estático)
 def buscar_todos_tickers_br():
     """Busca a lista oficial de tickers da B3 via API Dados de Mercado."""
     url = "https://api.dadosdemercado.com.br/v1/tickers"
@@ -32,7 +54,6 @@ def buscar_todos_tickers_br():
         response = requests.get(url)
         if response.status_code == 200:
             dados = response.json()
-            # Extrai apenas o campo 'ticker' de cada objeto na lista
             lista_tickers = [item['ticker'] for item in dados]
             return sorted(lista_tickers)
         return []
@@ -44,12 +65,11 @@ def buscar_todos_tickers_br():
 
 def normalizar_ticker(ticker):
     ticker = ticker.upper().strip()
-    # Se for um ticker brasileiro sem o .SA, adiciona
     if re.match(r'^[A-Z]{4}[0-9]{1,2}$', ticker):
         return f"{ticker}.SA"
     return ticker
 
-@st.cache_data
+@st.cache_data(ttl=14400) # Cache de 4 horas para dados históricos
 def extrai_dados(ticker, period="1y"):
     ticker_final = normalizar_ticker(ticker)
     stock = yf.Ticker(ticker_final)
@@ -88,7 +108,6 @@ def plot_volume(hist, ticker):
 def renderizar_aba_comparativa():
     st.title("⚖️ Comparativo de Performance (Peer Analysis)")
     
-    # 1. Inicializa o estado se não existir
     if "texto_tickers" not in st.session_state:
         st.session_state["texto_tickers"] = "PETR4, VALE3"
 
@@ -105,13 +124,11 @@ def renderizar_aba_comparativa():
     col_filtros_1, col_filtros_2 = st.columns([2, 1])
     
     with col_filtros_1:
-    
         st.text_input(
             "Digite os Tickers:",
             placeholder="Ex: PETR4, ITUB4, GOOGL",
             key="texto_tickers" 
         )
-        
         texto_input = st.session_state["texto_tickers"]
 
     with col_filtros_2:
@@ -122,40 +139,32 @@ def renderizar_aba_comparativa():
             "1 Ano": "1y", 
             "5 Anos": "5y"
         }
-
         horiz = st.selectbox("Período", list(h_map.keys()), index=3, key="periodo_comp")
 
     if texto_input:
-
         tickers_brutos = [t.strip() for t in texto_input.split(",") if t.strip()]
         tickers_sel = [normalizar_ticker(t) for t in tickers_brutos]
 
         if tickers_sel:
             try:
                 with st.spinner(f"Baixando dados para: {', '.join(tickers_sel)}..."):
-                   
                     df_raw = yf.download(tickers_sel, period=h_map[horiz], progress=False)['Close']
                     
                     if not df_raw.empty:
-                        # Tratamento Series vs DataFrame
                         if isinstance(df_raw, pd.Series):
                             df_plot = df_raw.to_frame()
                             df_plot.columns = [tickers_sel[0]]
                         else:
                             df_plot = df_raw
                         
-                        # Limpa colunas fantasma
                         df_plot = df_plot.dropna(axis=1, how='all')
                         
                         if not df_plot.empty:
-                            # Normalização Base 100
-                     
                             base_price = df_plot.fillna(method='bfill').iloc[0]
                             norm_df = (df_plot / base_price) * 100
                             
                             st.subheader(f"📈 Evolução Relativa (Base 100) - {horiz}")
                             
-                            # Gráfico Altair
                             c_data = norm_df.reset_index().melt(id_vars=["Date"], var_name="Ativo", value_name="Val")
                             chart = alt.Chart(c_data).mark_line().encode(
                                 x=alt.X("Date:T", title="Data"),
@@ -165,10 +174,8 @@ def renderizar_aba_comparativa():
                             ).properties(height=400).interactive()
                             
                             st.altair_chart(chart, use_container_width=True)
-                            
                             st.divider()
                             
-                            # Métricas
                             rent = ((df_plot.iloc[-1] / df_plot.iloc[0]) - 1) * 100
                             cols = st.columns(min(len(df_plot.columns), 5))
                             for idx, t in enumerate(df_plot.columns):
@@ -181,29 +188,30 @@ def renderizar_aba_comparativa():
 
 MODEL_ID = "llama-3.1-8b-instant"
 
-agente_consultor = Agent(
-    name="Consultor Financeiro",
-    model=Groq(id=MODEL_ID),
-    tools=[
-        DuckDuckGo(), 
-        YFinanceTools(stock_price=True, analyst_recommendations=True, stock_fundamentals=True, company_news=True)
-    ],
-    instructions=[
-        "Você é um consultor financeiro sênior do mercado de ações.",
-        "Responda em Português do Brasil.",
-        "Use tabelas para dados numéricos.",
-        "Nunca use tags HTML como <h2> ou <p>, use apenas Markdown.",
-        "Seja direto e não narre as ferramentas que está usando.",
-        "Sempre inclua as fontes no final."
-    ],
-    show_tool_calls=True,
-    markdown=True,
-    add_history_to_messages=True
-)
+# Cache da resposta da IA por 24 horas para economizar API
+@st.cache_data(ttl=86400)
+def executar_agente_ia(ticker):
+    agente_consultor = Agent(
+        name="Consultor Financeiro",
+        model=Groq(id=MODEL_ID),
+        tools=[
+            DuckDuckGo(), 
+            YFinanceTools(stock_price=True, analyst_recommendations=True, stock_fundamentals=True, company_news=True)
+        ],
+        instructions=[
+            "Você é um consultor financeiro sênior do mercado de ações.",
+            "Responda em Português do Brasil.",
+            "Use tabelas para dados numéricos.",
+            "Nunca use tags HTML como <h2> ou <p>, use apenas Markdown.",
+            "Seja direto e não narre as ferramentas que está usando.",
+            "Sempre inclua as fontes no final."
+        ],
+        markdown=True
+    )
+    prompt = f"Forneça um resumo das notícias de hoje e recomendações de analistas para {ticker}."
+    return agente_consultor.run(prompt)
 
 ########## Interface Streamlit e Navegação ##########
-
-st.set_page_config(page_title="Análise de Ações com IA", page_icon=":chart_with_upwards_trend:", layout="wide", initial_sidebar_state="expanded")
 
 # Sidebar
 st.sidebar.title("📈 Análise de Ações com IA")
@@ -228,11 +236,9 @@ if aba_selecionada == "Consultoria IA":
             with st.spinner(f"Processando análise para {ticker_ia}..."):
                 try:
                     st.subheader("🤖 Recomendação do Especialista")
-                    prompt = f"Forneça um resumo das notícias de hoje e recomendações de analistas para {ticker_ia}."
-                    response = agente_consultor.run(prompt)
+                    response = executar_agente_ia(ticker_ia)
 
                     if response and hasattr(response, 'content'):
-                        # Limpeza de logs e tags da IA
                         clean_response = re.sub(r"(Running:[\s\S]*?\n\n)", "", response.content)
                         clean_response = re.sub(r"<.*?>", "", clean_response)
                         frases_remover = ["Eu vou iniciar buscando", "Para isso vou usar", "Vou usar o endpoint"]
