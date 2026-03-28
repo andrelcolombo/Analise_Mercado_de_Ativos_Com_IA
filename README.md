@@ -1,6 +1,5 @@
-# 📈 Terminal de Inteligência Financeira v1.0
+# 📈 Terminal de Inteligência Financeira
 
-![Status do Projeto](https://img.shields.io/badge/Status-Em_Desenvolvimento-green)
 ![Python Version](https://img.shields.io/badge/Python-3.10%2B-blue)
 ![Streamlit](https://img.shields.io/badge/Framework-Streamlit-ff4b4b)
 
